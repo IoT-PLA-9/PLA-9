@@ -4,14 +4,23 @@
 void WriteLine(char* filename, String line) {
   File myxFile;
   myxFile = SD.open(filename, FILE_WRITE);
-  myxFile.print(line);
+  myxFile.println(line);
   myxFile.close();
 }
  
-String ReadLine(char* filename, int x = 1) {
-  File myxFile;
-  String line = "";
-  myxFile = SD.open(filename);
+String ReadLine(char* filename, int x) {
+
+ File myxFile;
+  String line;
+   myxFile = SD.open(filename);
+
+    for (int i = 1; i < x; i++)
+    {
+       while (myxFile.available()) 
+        line = myxFile.readStringUntil('\n');
+    }
+   return line; 
+  /*
   for (int i = 1; i < x; i++) {
     while (myxFile.available()) {
       if (myxFile.read() == '\n' ) {
@@ -28,6 +37,7 @@ String ReadLine(char* filename, int x = 1) {
   }
   myxFile.close();
   return line;
+  */
 }
  
 int NumberOfLogs(char* filename) {
@@ -35,12 +45,16 @@ int NumberOfLogs(char* filename) {
   int i = 0;
   myxFile = SD.open(filename);
   while (myxFile.available()) {
+    myxFile.readStringUntil('\n');
+    i++;
+  }
+  myxFile.close();
+  return i;   
+/*
     if (myxFile.read() == '\n' ) {
       i++;
     }
-  }
-  myxFile.close();
-  return i;
+*/
 }
  
 void CopyFile(char* filename1, char* filename2) {
@@ -83,7 +97,7 @@ void SaveLogs (char* filename, int trgr) {
   CopyFile((char*)"tempfile.txt", filename);
   SD.remove((char*)"tempfile.txt");
 }
- 
+
 void EraseLastLog (char* filename) {
   SD.remove((char*)"tempfile.txt");
   int y = NumberOfLogs(filename);

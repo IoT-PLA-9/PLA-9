@@ -10,6 +10,7 @@
 #include <Adafruit_SleepyDog.h>
 #include <MQTT.h>
 #include <MQTTClient.h>
+
 #include "arduino_secrets.h"
 
 char ssid[] = SECRET_SSID;
@@ -24,7 +25,7 @@ char mqttPass[] = SECRET_MQTT_PASS;
 unsigned long lastMillis = 0;
 unsigned long lastMillis2 = 0;
 
-WiFiClient net;
+WiFiSSLClient net;
 MQTTClient mqttClient;
 RTCZero rtc;
 
@@ -251,7 +252,7 @@ void messageReceived(String &topic, String &payload)
   {
     automatic = payload;
     Serial.println("automatic: " + automatic);
-    mqttClient.publish("homie/boiler_xxx/mkr1000/mkenv/automatic",automatic,RETAIN,0);
+ //   mqttClient.publish("homie/boiler_xxx/mkr1000/mkenv/automatic",automatic,RETAIN,0);
 
   }
   /*
@@ -266,7 +267,7 @@ void messageReceived(String &topic, String &payload)
     mqttClient.unsubscribe("homie/boiler_xxx/mkr1000/relayshd/relay1");
     digitalWrite(RELAY1, payload == "true");
     relaystatus = payload; 
-    mqttClient.publish("homie/boiler_xxx/mkr1000/relayshd/relay1",relaystatus,RETAIN,0);  
+ //   mqttClient.publish("homie/boiler_xxx/mkr1000/relayshd/relay1",relaystatus,RETAIN,0);  
 //    if (payload == "true")
 //    {
       Serial.print("==> Relay1 \t");
@@ -322,7 +323,7 @@ void messageReceived(String &topic, String &payload)
      if (relay1Setteable != payload)
       {
        relay1Setteable = payload;
-       mqttClient.publish("homie/boiler_xxx/mkr1000/relayshd/relay1/$setteable", relay1Setteable );
+//       mqttClient.publish("homie/boiler_xxx/mkr1000/relayshd/relay1/$setteable", relay1Setteable );
       }
 
   }
@@ -835,10 +836,8 @@ void loop()
       Serial.println("Invalid Data");
     }
   }
-//  WriteToFile();
-//  fileInfo();
-
-  Watchdog.reset();
+    // WriteToFile(fileName);
+    Watchdog.reset();
 }
 void SaveDate(char * nameofFile, String epch)
 {
@@ -849,4 +848,52 @@ void SaveDate(char * nameofFile, String epch)
     myxFile.print(epch);
     myxFile.close();
   }
+}
+void cleanFile(char *nameofFile)
+{
+  File myxFileO;
+  File myxFileD;
+ // SdFat sd;
+  
+  int ctdor = 1;
+  String line;
+  float epch;
+
+  epch = WiFi.getTime();
+  if (SD.exists(nameofFile))
+  {
+    myxFileD = SD.open("buffer.csv", FILE_WRITE);
+    myxFileO = SD.open(nameofFile, FILE_READ) ;
+    myxFileD.close();
+
+    String msgField[7];
+    while (myxFileO.available())
+    {
+      line = myxFileO.readStringUntil('\n');
+      getCSVfields(line);
+//      Serial.print("Linea: ");
+//      Serial.println(ctdor);
+      Serial.print("Msg: ");
+      Serial.println(msgField[0]);
+      Serial.print("Epoc -24: ");
+      Serial.println(epch -(24*60+3600));
+      if (msgField[0].toFloat() >= epch -(24*60+3600)) // 24h en segundos
+      {
+        while (myxFileO.available())
+        {
+          Serial.print("Linea: ");
+          Serial.println(ctdor);
+          line = myxFileO.readStringUntil('\n');
+          WriteLine("buffer.csv", line);
+        } 
+        myxFileO.close();
+        CopyFile("buffer.csv",nameofFile);
+        Serial.print("buffer.csv ->");
+        Serial.print(nameofFile);
+      }
+      ctdor++;
+    }
+    myxFileO.close();
+    SD.remove(nameofFile);
+ }
 }

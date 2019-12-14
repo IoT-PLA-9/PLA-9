@@ -1,10 +1,10 @@
-#define SECRET_SSID "Casa"
-#define SECRET_PASS "0a1b2c3d4e"
-#define SECRET_MQTT_CLIENT_ID "MKR1000"
-#define SECRET_MQTT_HOST "192.168.2.146"
-#define SECRET_MQTT_USER "mkr1000"
-#define SECRET_MQTT_PASS "mqtt"
-#define SSL_PORT 1883
+#define SECRET_SSID "SSID"
+#define SECRET_PASS "SIDPass"
+#define SECRET_MQTT_CLIENT_ID "MQTTId"
+#define SECRET_MQTT_HOST "MQTTHost"
+#define SECRET_MQTT_USER "MQTTUser"
+#define SECRET_MQTT_PASS "MQTTPwd"
+#define SSL_PORT 8883
 #define RELAY1 1
 #define RETAIN true
  
