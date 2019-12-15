@@ -25,7 +25,7 @@ char mqttPass[] = SECRET_MQTT_PASS;
 unsigned long lastMillis = 0;
 unsigned long lastMillis2 = 0;
 
-WiFiSSLClient net;
+WiFiClient net;
 MQTTClient mqttClient;
 RTCZero rtc;
 
@@ -338,6 +338,14 @@ void messageReceived(String &topic, String &payload)
     tempsetpointH = payload.toFloat();
     Serial.print("\ntempsetpointH = ");
     Serial.println(tempsetpointH);
+    //------------------------
+    if (temperature >= tempsetpointH)
+    {
+      relaystatus = "false";
+      digitalWrite(RELAY1,LOW);
+      mqttClient.publish("homie/boiler_xxx/mkr1000/relayshd/relay1/set", "false",RETAIN,0);     
+    }
+    //------------------------
   }
 
   if ((topic == "homie/boiler_xxx/mkr1000/mkrenv/tempsetpointL"))
@@ -345,6 +353,14 @@ void messageReceived(String &topic, String &payload)
     tempsetpointL = payload.toFloat();
     Serial.print("\ntempsetpointL = ");
     Serial.println(tempsetpointL);
+    //------------------------
+    if (temperature <= tempsetpointL)
+    {
+      relaystatus = "true";
+      digitalWrite(RELAY1,HIGH);
+      mqttClient.publish("homie/boiler_xxx/mkr1000/relayshd/relay1/set", "true",RETAIN,0);     
+    }
+    //------------------------
   }
 
   Serial.println(" ");
@@ -459,7 +475,8 @@ void alarmMatch()
     Serial.println(fileSave);
     // delay(1000);
     WriteToFile(fileSave);
-     SaveDate("NosDate.txt", String(epoch));
+    SaveDate("NoSDate.txt", String(epoch));
+    cleanFile(fileSave);
   }
 
   rtc.setAlarmSeconds((rtc.getAlarmSeconds() + TIME4) % 60);
@@ -741,19 +758,29 @@ void loop()
         connectMqttServer();
       if (mqttClient.connected())
       {
+//------------------------------------------------------------------------------
+       for (int i=1; i <= argument.toInt(); i++ )
+       {
+         
+         LastFilelog = ReadLine(fileSave, argument.toInt());
+         Serial.println(LastFilelog);
+         getCSVfields(LastFilelog);
         //        mqttClient.publish("homie/boiler_xxx/mkr1000/mkrenv/epoch_D", LastFilelogEpoch, RETAIN, 0);
-        mqttClient.publish("homie/boiler_xxx/mkr1000/mkrenv/temperature", (msgField[1] + " / " + msgField[0]), RETAIN, 0);
-        mqttClient.publish("homie/boiler_xxx/mkr1000/mkrenv/tempsetpointH", (msgField[2] + " / " + msgField[0]), RETAIN, 0);
-        mqttClient.publish("homie/boiler_xxx/mkr1000/mkrenv/tempsetpointL", (msgField[3] + " / " + msgField[0]), RETAIN, 0);
+         mqttClient.publish("homie/boiler_xxx/mkr1000/mkrenv/temperature", (msgField[1] + " / " + msgField[0]), RETAIN, 0);
+         mqttClient.publish("homie/boiler_xxx/mkr1000/mkrenv/tempsetpointH", (msgField[2] + " / " + msgField[0]), RETAIN, 0);
+         mqttClient.publish("homie/boiler_xxx/mkr1000/mkrenv/tempsetpointL", (msgField[3] + " / " + msgField[0]), RETAIN, 0);
 
-       // if (LastFilelogR1.indexOf("true") >= 0)
-        mqttClient.publish("homie/boiler_xxx/mkr1000/relayshd/relay1", (msgField[4] + " / " + msgField[0]), RETAIN, 0);
+        // if (LastFilelogR1.indexOf("true") >= 0)
+         mqttClient.publish("homie/boiler_xxx/mkr1000/relayshd/relay1", (msgField[4] + " / " + msgField[0]), RETAIN, 0);
        // else
        //   mqttClient.publish("homie/boiler_xxx/mkr1000/relayshd/relay1", "false", RETAIN, 0);
-        mqttClient.publish("homie/boiler_xxx/mkr1000/relayshd/relay1/$setteable",(msgField[5]+  " / " + msgField[0]), RETAIN, 0);   //+++
-        mqttClient.publish("homie/boiler_xxx/mkr1000/mkrenv/automatic",(msgField[6] + " / " + msgField[0]), RETAIN, 0);   //+++
-        EraseLastLog(fileSave);
-        fileInfo(fileSave);
+         mqttClient.publish("homie/boiler_xxx/mkr1000/relayshd/relay1/$setteable",(msgField[5]+  " / " + msgField[0]), RETAIN, 0);   //+++
+         mqttClient.publish("homie/boiler_xxx/mkr1000/mkrenv/automatic",(msgField[6] + " / " + msgField[0]), RETAIN, 0);   //+++
+        //EraseLastLog(fileSave);
+        //fileInfo(fileSave);
+        SD.remove(fileSave);     
+       } 
+//----------------------------------------------------------------------------------
       }
       if (!mqttClient.connected())
         connectMqttServer();
@@ -872,12 +899,12 @@ void cleanFile(char *nameofFile)
       line = myxFileO.readStringUntil('\n');
       getCSVfields(line);
 //      Serial.print("Linea: ");
-//      Serial.println(ctdor);
+//      Serial.println(ctdor); 
       Serial.print("Msg: ");
       Serial.println(msgField[0]);
-      Serial.print("Epoc -24: ");
-      Serial.println(epch -(24*60+3600));
-      if (msgField[0].toFloat() >= epch -(24*60+3600)) // 24h en segundos
+      Serial.print("Epoch -24: ");
+      Serial.println(epch -(24*60*3600));
+      if (msgField[0].toFloat() >= epch -(24*60*3600)) // 24h en segundos
       {
         while (myxFileO.available())
         {
@@ -890,10 +917,13 @@ void cleanFile(char *nameofFile)
         CopyFile("buffer.csv",nameofFile);
         Serial.print("buffer.csv ->");
         Serial.print(nameofFile);
+
+        SD.remove("SenDate.txt");
+        SaveDate("SenDate.txt", String(epch));
       }
       ctdor++;
-    }
-    myxFileO.close();
+        myxFileO.close();
     SD.remove(nameofFile);
+    }
  }
 }
