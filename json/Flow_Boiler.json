@@ -1,1 +1,55 @@
- 
+[
+    {
+        "id": "de959780.8dcfa8",
+        "type": "ui_switch",
+        "z": "56fc2cd1.958a24",
+        "name": "state relay1",
+        "label": "Relay State",
+        "tooltip": "State of Relay ON / OFF",
+        "group": "db69165d.228558",
+        "order": 1,
+        "width": 0,
+        "height": 0,
+        "passthru": false,
+        "decouple": "false",
+        "topic": "homie/boiler_xxx/mkr1000/relayshd/relay1",
+        "style": "",
+        "onvalue": "true",
+        "onvalueType": "str",
+        "onicon": "",
+        "oncolor": "",
+        "offvalue": "false",
+        "offvalueType": "str",
+        "officon": "",
+        "offcolor": "",
+        "x": 350,
+        "y": 240,
+        "wires": [
+            [
+                "d543ba29.ea8fc8",
+                "12554641.7716fa"
+            ]
+        ]
+    },
+    {
+        "id": "db69165d.228558",
+        "type": "ui_group",
+        "z": "",
+        "name": "Relay Operation",
+        "tab": "c92b2065.6ac72",
+        "order": 1,
+        "disp": true,
+        "width": 13,
+        "collapse": true
+    },
+    {
+        "id": "c92b2065.6ac72",
+        "type": "ui_tab",
+        "z": "",
+        "name": "Boiler",
+        "icon": "dashboard",
+        "order": 3,
+        "disabled": false,
+        "hidden": false
+    }
+]
