@@ -20,6 +20,7 @@ Operacion
       - Generar certificado de CA para RPi
       - Generar cerficado para casa servicio
       - Colocar referencia al los certificados en los ficheros de configuracion de los servicios
+      - Personalizar flow Node-RED y panel grafana
       - Enlazar Zero.Tier a la red VPN establecida
       - Colocar certificad EC2 en almacen de confianza
       - Testear y probar
@@ -36,6 +37,7 @@ Operacion
       - Cerar certificado de CA.
       - Crear certificado para los diferentes servicios
       - Instalar y configurar los distintos servicios Mosquitto, Node-RED, InfluxDB y Grafana.
+      - Importar y personalizar flow Node-RED y panel Grafana
       - Cargar y conectar  Zero-Tier a la VPN establecida
       - Configurar acceso seguro a los servicios
       - Testear y probar.
