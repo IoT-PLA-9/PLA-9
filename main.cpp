@@ -264,7 +264,7 @@ void messageReceived(String &topic, String &payload)
  */
   if ((topic == "homie/boiler_xxx/mkr1000/relayshd/relay1"))
   {
-    mqttClient.unsubscribe("homie/boiler_xxx/mkr1000/relayshd/relay1");
+   // mqttClient.unsubscribe("homie/boiler_xxx/mkr1000/relayshd/relay1");
     digitalWrite(RELAY1, payload == "true");
     relaystatus = payload; 
  //   mqttClient.publish("homie/boiler_xxx/mkr1000/relayshd/relay1",relaystatus,RETAIN,0);  
@@ -378,49 +378,74 @@ void getENVValues()
 
   epoch = rtc.getEpoch() - GMT * 3600;
 }
-void WriteToFile(char *nameofFile)
+void WriteToFile(char *nameofFile, int numLine)
 {
   File myxFile;
+  String Line = "" ,line;
   Watchdog.reset();
   if (myxFile = SD.open(nameofFile, FILE_WRITE))
   {
     Serial.print("Writing to ");
     Serial.print(nameofFile);
     Serial.println(" .....");
-
-    myxFile.print(epoch);   //msgField[0]
-    myxFile.print(",");
-
-    myxFile.print(temperature);  //msgField[1]
-    myxFile.print(",");
-
-    myxFile.print(tempsetpointH);  //msgField[2]
-    myxFile.print(",");
+    Line+= String(epoch);
+//    myxFile.print(epoch);   //msgField[0]
+//    myxFile.print(",");
+    Line+= ",";
+    Line += String(temperature); 
+//    myxFile.print(temperature);  //msgField[1]
+//    myxFile.print(",");
+    Line += ",";
+    Line += String((tempsetpointH));
+//    myxFile.print(tempsetpointH);  //msgField[2]
+//    myxFile.print(",");
     //myFile.print(" tempsetpointH ");
-    myxFile.print(tempsetpointL);   //msgField[3]
+    Line += ",";
+    Line += String(tempsetpointL);
+//    myxFile.print(tempsetpointL);   //msgField[3]
     //myFile.print(" tempsetpointL ");
-    myxFile.print(",");
+//    myxFile.print(",");
+    Line += ",";
 
-    myxFile.print(relaystatus);    //msgField[4]
-    myxFile.print(",");
+    Line += String(relaystatus);
+//    myxFile.print(relaystatus);    //msgField[4]
+//    myxFile.print(",");
     //myFile.print(" relay1 ");
+    Line += ",";
 
-    myxFile.print(relay1Setteable);  //msgField[5]
+    Line += String(relay1Setteable);
+//    myxFile.print(relay1Setteable);  //msgField[5]
     //myFile.print(" relay1/$setteable ");
-    myxFile.print(",");
+//    myxFile.print(",");
+    Line += ",";
 
-    myxFile.print(automatic);   //msgField[6]
+    Line += automatic;
+//    myxFile.print(automatic);   //msgField[6]
+
+    
+  if (numLine != NULL)
+  {
+    while (myxFile.available()){
+    for (int i = 1; i < numLine; i++){  
+        line = myxFile.readStringUntil('\n');
+        Serial.print(i);
+     }
+    }
+   }
+    Serial.println(Line);
+    myxFile.println(Line);
+
      //+++++++ Añadido
-    myxFile.println();
+//    myxFile.println();
     myxFile.close();
-  
-    Serial.println("done.");
-  }
+      Serial.println("done.");
+    }
   else
   {
     Serial.print("error opening ");
     Serial.println(fileName);
   }
+ // fileInfo(nameofFile);
 }
 
 void fileInfo(char *nameofFile)
@@ -460,7 +485,7 @@ void alarmMatch()
     Serial.print("Saving to ");
     Serial.println(fileName);
     //delay(1000);
-    WriteToFile(fileName);
+    WriteToFile(fileName, cleanFile(fileName));
     SaveDate("SenDate.txt", String(epoch));
   }
 
@@ -474,9 +499,8 @@ void alarmMatch()
     Serial.print("Saving to ");
     Serial.println(fileSave);
     // delay(1000);
-    WriteToFile(fileSave);
+    WriteToFile(fileSave, cleanFile(fileSave));
     SaveDate("NoSDate.txt", String(epoch));
-    cleanFile(fileSave);
   }
 
   rtc.setAlarmSeconds((rtc.getAlarmSeconds() + TIME4) % 60);
@@ -673,6 +697,7 @@ void loop()
     if (automatic == "true")
     {
       temperature = ENV.readTemperature();
+      Serial.println("\nepcoh: " + String(epoch));
       Serial.println("\ntemperature: " + String(temperature));
       Serial.println("tempsetpointH: " + String(tempsetpointH));
       Serial.println("tempsetpointL: " + String(tempsetpointL));
@@ -869,61 +894,70 @@ void loop()
 void SaveDate(char * nameofFile, String epch)
 {
   File myxFile;
+  
+  SD.remove(nameofFile);
+  
   if  (!SD.exists(nameofFile))
   {
     myxFile = SD.open(nameofFile, FILE_WRITE);
-    myxFile.print(epch);
+    myxFile.println(epch);
     myxFile.close();
   }
 }
-void cleanFile(char *nameofFile)
+int  cleanFile(char *nameofFile)
 {
   File myxFileO;
   File myxFileD;
- // SdFat sd;
+ 
   
-  int ctdor = 1;
+  int ctdor = 0;
   String line;
   float epch;
-
-  epch = WiFi.getTime();
+  String msgField[7];
+  
+   Serial.print("CleanFile: ");
+   Serial.println(nameofFile);
+   epch = rtc.getEpoch() - GMT * 3600;
+   Serial.print("Epoch -24: ");
+   Serial.println((epch - (epch -(24*60)))/3600);
   if (SD.exists(nameofFile))
   {
-    myxFileD = SD.open("buffer.csv", FILE_WRITE);
-    myxFileO = SD.open(nameofFile, FILE_READ) ;
-    myxFileD.close();
+   // myxFileD = SD.open("buffer.csv", FILE_WRITE);
+    myxFileO = SD.open(nameofFile, FILE_WRITE) ;
+//    myxFileD.close();
 
-    String msgField[7];
+    
     while (myxFileO.available())
     {
+      ctdor++;
       line = myxFileO.readStringUntil('\n');
       getCSVfields(line);
-//      Serial.print("Linea: ");
-//      Serial.println(ctdor); 
+      Serial.print("Linea: ");
+      Serial.println(ctdor); 
       Serial.print("Msg: ");
       Serial.println(msgField[0]);
       Serial.print("Epoch -24: ");
-      Serial.println(epch -(24*60*3600));
-      if (msgField[0].toFloat() >= epch -(24*60*3600)) // 24h en segundos
+      Serial.println(epch -(24*3600));
+      if (msgField[0].toFloat() <= epch - 24*3600) //-(24*3600)) // 24h en segundos
       {
-        while (myxFileO.available())
-        {
-          Serial.print("Linea: ");
-          Serial.println(ctdor);
-          line = myxFileO.readStringUntil('\n');
-          WriteLine("buffer.csv", line);
-        } 
         myxFileO.close();
-        CopyFile("buffer.csv",nameofFile);
-        Serial.print("buffer.csv ->");
-        Serial.print(nameofFile);
-
-        SD.remove("SenDate.txt");
-        SaveDate("SenDate.txt", String(epch));
-      }
-      ctdor++;
-        myxFileO.close();
-    SD.remove(nameofFile);
+         SD.remove("SenDate.txt");
+         SaveDate("SenDate.txt", String(epch));
+         Serial.print("Posicion: ");
+         Serial.println(ctdor);
+         break;
+      }     
     }
+     myxFileO.close();
+     return ctdor;
  }
+  else
+  {
+    
+    Serial.println("NO exists, create...");
+    myxFileO = SD.open(nameofFile, FILE_WRITE) ;
+    myxFileO.close();
+  }
+  Serial.println("Return NULL !!");
+   return NULL;
 }

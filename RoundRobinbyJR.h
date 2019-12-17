@@ -12,7 +12,7 @@ int NumberOfLogs(char* filename);
 
 void CopyFile(char* filename1, char* filename2);
 
-void WriteLine(char* filename, String line);
+void WriteLine(char* filename, String line, int numLine);
 
 void EraseLastLog (char* filename);
 
