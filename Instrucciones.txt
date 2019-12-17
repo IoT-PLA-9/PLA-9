@@ -1,0 +1,49 @@
+Ensambaldo del Sistema
+
+Elementos Necesarios
+  
+    - MKR1000
+    - MKR ENV
+    - MKR Relay
+    - Raspberry Pi
+    - Alimentacion electrica
+    - SO Raspbian con Mosquitto, Node-RED, InfluxDB, Grafana  y Zero-Tier preinstalado y preconfigurado.
+    - Certificado Equipo en EC2
+    
+Operacion
+ 
+  Configurar usuarios y los distintos servicios con acceso https y segurirad TLS antes de la clonacion.
+  
+   + En la Rpi
+  
+      - Asiganr uan ip estatica a la Rpi
+      - Generar certificado de CA para RPi
+      - Generar cerficado para casa servicio
+      - Colocar referencia al los certificados en los ficheros de configuracion de los servicios
+      - Enlazar Zero.Tier a la red VPN establecida
+      - Colocar certificad EC2 en almacen de confianza
+      - Testear y probar
+
+  + En las shields
+  
+      - Montaje de las placas superpuestas
+      - Cargar certificado CA Rpi segun memoria
+      - Cargar el firmware generado
+      - Testear y probar
+      
+  + En Ec2
+  
+      - Cerar certificado de CA.
+      - Crear certificado para los diferentes servicios
+      - Instalar y configurar los distintos servicios Mosquitto, Node-RED, InfluxDB y Grafana.
+      - Cargar y conectar  Zero-Tier a la VPN establecida
+      - Configurar acceso seguro a los servicios
+      - Testear y probar.
+ 
+    
+ 
+ 
+ 
+    
+
+    
