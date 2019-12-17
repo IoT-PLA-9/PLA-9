@@ -25,7 +25,7 @@ char mqttPass[] = SECRET_MQTT_PASS;
 unsigned long lastMillis = 0;
 unsigned long lastMillis2 = 0;
 
-WiFiClient net;
+WiFiSSLClient net;
 MQTTClient mqttClient;
 RTCZero rtc;
 
