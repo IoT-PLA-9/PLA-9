@@ -1,7 +1,7 @@
-#define SECRET_SSID "SSSID_NAME"
-#define SECRET_PASS "SSIDPWD"
-#define SECRET_MQTT_CLIENT_ID "Client_ID"
-#define SECRET_MQTT_HOST "HOST_IP"
+#define SECRET_SSID "SSID"
+#define SECRET_PASS "SSIDPwd"
+#define SECRET_MQTT_CLIENT_ID "ID"
+#define SECRET_MQTT_HOST "IPHOST"
 #define SECRET_MQTT_USER "user"
 #define SECRET_MQTT_PASS "pwd"
 #define SSL_PORT 8883

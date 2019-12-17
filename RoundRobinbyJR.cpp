@@ -1,6 +1,8 @@
 #include <SPI.h>
 #include <SD.h>
  
+//Modificat
+
 void WriteLine(char* filename, String line, int numLine)
 {
   File myxFile;
@@ -50,6 +52,8 @@ String ReadLine(char* filename, int x) {
   */
 }
  
+// Modificat
+
 int NumberOfLogs(char* filename) {
   File myxFile;
   int i = 0;

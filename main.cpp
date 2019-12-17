@@ -30,25 +30,17 @@ MQTTClient mqttClient;
 RTCZero rtc;
 
 const int GMT = 1;
-
 const int SD_CHIP_SELECT = 4;
-
 const int relay1 = 1;
 
 String s1 = "";
 String argument = "";
-
 String LastFilelog = "";
-String LastFilelogEpoch = "";
-String LastFilelogTemp = "";
-String LastFilelogR1 = "";
-String LastFilelogR1Set = "";
-String LastFilelogtempsetpointH = "";
-String LastFilelogtempsetpointL = "";
 
 unsigned int seconds = TIME1;
 
 File myFile;
+
 char fileName[20] = "boiler.csv";
 char fileSave[20] = "NotSend.csv";
 const int logsToRemove = 60 / (TIME4 / 60); //?
@@ -59,35 +51,23 @@ unsigned long prevTime = 0;
 
 String msgField[7];
 
-struct Data { 
-     char *epch; 
-     char *temp;
-     char *r1set; 
-     char *r1stt;
-     char *tsl;
-     char *tsh ; 
-     char *aut;
-} ; 
-
-struct Data dTofile;
-
 float temperature;
 
 String relay1Setteable = "false";
-// String relay2Setteable = "false";
+
 unsigned long epoch;
 String relaystatus = "false";
 float tempsetpointH = 27.00;
 float tempsetpointL = 26.00;
 String automatic = "true";
 
-// String tempsetpointH_D;
-// String tempsetpointL_D;
-  // Mensaje de LastWill
-  const char willTopic[] = "homie/boiler_xxx/will";
-  String willPayload = "Broken !!!";
-  bool willRetain = true;
-  int willQos = 1;
+// Mensaje de LastWill
+const char willTopic[] = "homie/boiler_xxx/will";
+String willPayload = "disconnected";
+bool willRetain = true;
+int willQos = 1;
+
+// Obtencion del tiempo
 
 void setRTCwithNTP()
 {
@@ -119,6 +99,8 @@ void setRTCwithNTP()
   rtc.setHours(rtc.getHours() + GMT);
 }
 
+// Auxiliar print
+
 void print2digits(int number)
 {
   if (number < 10)
@@ -127,6 +109,8 @@ void print2digits(int number)
   }
   Serial.print(number);
 }
+
+// Auxiliar print Time
 
 void printTime()
 {
@@ -139,6 +123,8 @@ void printTime()
   Serial.println();
 }
 
+// Auxiliar print SaveDate
+
 void printDate()
 {
   print2digits(rtc.getDay());
@@ -149,6 +135,8 @@ void printDate()
 
   Serial.println("");
 }
+
+// Status WiFi
 
 void printWiFiStatus()
 {
@@ -165,6 +153,9 @@ void printWiFiStatus()
   Serial.print(rssi);
   Serial.println(" dBm");
 }
+
+
+// Visor lecturas
 
 void printReading(float temperature)
 {
@@ -197,6 +188,8 @@ void printReading(float temperature)
   Serial.println();
 }
 
+// Conexion MQTT
+
 void connectMqttServer()
 {
 
@@ -214,13 +207,14 @@ void connectMqttServer()
   unsigned long mqttTime = millis();
   unsigned long mqttnow = millis();
 
-  // Y este whie ?
   while (!mqttClient.connect(mqttClientId, mqttUser, mqttPass) && (mqttnow < mqttTime + 5000))
   {
     Serial.print(".");
     mqttnow = millis();
     delay(1000);
   }
+
+// Suscripcion acciones panel
 
   if (mqttClient.connected())
   {
@@ -231,7 +225,6 @@ void connectMqttServer()
     mqttClient.subscribe("homie/boiler_xxx/mkr1000/mkrenv/tempsetpointH");
     mqttClient.subscribe("homie/boiler_xxx/mkr1000/mkrenv/tempsetpointL");
     mqttClient.subscribe("homie/boiler_xxx/mkr1000/mkrenv/automatic");
-    //    mqttClient.subscribe("/hello");
     mqttClient.subscribe("homie/boiler_xxx/mkr1000/relayshd/relay1/set");
     mqttClient.subscribe("homie/boiler_xxx/mkr1000/relayshd/relay1/$setteable");
     mqttClient.subscribe("homie/boiler_xxx/mkr1000/relayshd/relay1");
@@ -243,6 +236,8 @@ void connectMqttServer()
   Watchdog.enable(180000);
 }
 
+// Acciones mensaje del panel
+
 void messageReceived(String &topic, String &payload)
 {
 
@@ -252,44 +247,16 @@ void messageReceived(String &topic, String &payload)
   {
     automatic = payload;
     Serial.println("automatic: " + automatic);
- //   mqttClient.publish("homie/boiler_xxx/mkr1000/mkenv/automatic",automatic,RETAIN,0);
 
-  }
-  /*
-  if ((topic == "homie/boiler_xxx/mkr1000/mkrenv/automatic") && (payload == "false"))
-  {
-    automatic = "false";
-    Serial.println("automatic: " + automatic);
-  }
- */
   if ((topic == "homie/boiler_xxx/mkr1000/relayshd/relay1"))
   {
-   // mqttClient.unsubscribe("homie/boiler_xxx/mkr1000/relayshd/relay1");
     digitalWrite(RELAY1, payload == "true");
     relaystatus = payload; 
- //   mqttClient.publish("homie/boiler_xxx/mkr1000/relayshd/relay1",relaystatus,RETAIN,0);  
-//    if (payload == "true")
-//    {
+/*
       Serial.print("==> Relay1 \t");
       Serial.print(payload+"\t");
       Serial.println(digitalRead(RELAY1));
-      
-//      digitalWrite(RELAY1, payload == "true");
-//      relaystatus = payload;
-//      if (digitalRead(RELAY1))
-//        mqttClient.publish("homie/boiler_xxx/mkr1000/relayshd/relay1", "true");
-//      else 
-//        mqttClient.publish("homie/boiler_xxx/mkr1000/relayshd/relay1", "false");  
-    
-    /*
-    if (payload == "false")
-    {
-      digitalWrite(RELAY1, LOW);
-      relaystatus = "false";
-      if (!digitalRead(RELAY1))
-        mqttClient.publish("homie/boiler_xxx/mkr1000/relayshd/relay1", "false");
-    }
-   */
+*/
   }
 
   if ((topic == "homie/boiler_xxx/mkr1000/relayshd/relay1/set") && (payload == "true") && (relay1Setteable != "false") && (automatic != "true"))
@@ -300,22 +267,16 @@ void messageReceived(String &topic, String &payload)
 
     digitalWrite(RELAY1, HIGH);
     relaystatus = "true";
-//    if (digitalRead(RELAY1))
-//      mqttClient.publish("homie/boiler_xxx/mkr1000/relayshd/relay1", "true" );
   }
 
-  //else 
   if ((topic == "homie/boiler_xxx/mkr1000/relayshd/relay1/set") && (payload == "false") && (relay1Setteable != "false") && (automatic != "true"))
   {
     digitalWrite(RELAY1, LOW);
     relaystatus = "false";
-//    if (!digitalRead(RELAY1))
-//      mqttClient.publish("homie/boiler_xxx/mkr1000/relayshd/relay1", "false" );
   }
 
   if ((topic == "homie/boiler_xxx/mkr1000/relayshd/relay1/$setteable")) //&& (payload == "true"))
   {
-   // relay1Setteable = "true";
       Serial.print("==> Relay1 setteable\t");
       Serial.print(payload+"\t");
       Serial.println(relay1Setteable);
@@ -323,16 +284,10 @@ void messageReceived(String &topic, String &payload)
      if (relay1Setteable != payload)
       {
        relay1Setteable = payload;
-//       mqttClient.publish("homie/boiler_xxx/mkr1000/relayshd/relay1/$setteable", relay1Setteable );
       }
 
   }
-/*
-  else if ((topic == "homie/boiler_xxx/mkr1000/relayshd/relay1/$setteable") && (payload == "false"))
-  {
-    relay1Setteable = "false";
-  }
-*/
+
   if ((topic == "homie/boiler_xxx/mkr1000/mkrenv/tempsetpointH"))
   {
     tempsetpointH = payload.toFloat();
@@ -366,6 +321,8 @@ void messageReceived(String &topic, String &payload)
   Serial.println(" ");
 }
 
+// Lectura sensores
+
 void getENVValues()
 {
 
@@ -378,6 +335,9 @@ void getENVValues()
 
   epoch = rtc.getEpoch() - GMT * 3600;
 }
+
+// Salva lecturas csv
+
 void WriteToFile(char *nameofFile, int numLine)
 {
   File myxFile;
@@ -389,40 +349,21 @@ void WriteToFile(char *nameofFile, int numLine)
     Serial.print(nameofFile);
     Serial.println(" .....");
     Line+= String(epoch);
-//    myxFile.print(epoch);   //msgField[0]
-//    myxFile.print(",");
     Line+= ",";
     Line += String(temperature); 
-//    myxFile.print(temperature);  //msgField[1]
-//    myxFile.print(",");
     Line += ",";
     Line += String((tempsetpointH));
-//    myxFile.print(tempsetpointH);  //msgField[2]
-//    myxFile.print(",");
-    //myFile.print(" tempsetpointH ");
     Line += ",";
     Line += String(tempsetpointL);
-//    myxFile.print(tempsetpointL);   //msgField[3]
-    //myFile.print(" tempsetpointL ");
-//    myxFile.print(",");
     Line += ",";
-
     Line += String(relaystatus);
-//    myxFile.print(relaystatus);    //msgField[4]
-//    myxFile.print(",");
-    //myFile.print(" relay1 ");
     Line += ",";
-
     Line += String(relay1Setteable);
-//    myxFile.print(relay1Setteable);  //msgField[5]
-    //myFile.print(" relay1/$setteable ");
-//    myxFile.print(",");
     Line += ",";
-
     Line += automatic;
-//    myxFile.print(automatic);   //msgField[6]
-
     
+// Posicion a escribir
+
   if (numLine != NULL)
   {
     while (myxFile.available()){
@@ -435,18 +376,17 @@ void WriteToFile(char *nameofFile, int numLine)
     Serial.println(Line);
     myxFile.println(Line);
 
-     //+++++++ Añadido
-//    myxFile.println();
     myxFile.close();
-      Serial.println("done.");
+    Serial.println("done.");
     }
   else
   {
     Serial.print("error opening ");
     Serial.println(fileName);
   }
- // fileInfo(nameofFile);
 }
+
+// Contenido del fichero
 
 void fileInfo(char *nameofFile)
 {
@@ -458,6 +398,8 @@ void fileInfo(char *nameofFile)
   PrintFile(nameofFile);
   Serial.println();
 }
+
+// Accion de interrupcion
 
 void alarmMatch()
 {
@@ -473,21 +415,21 @@ void alarmMatch()
     printReading(temperature);
 
     lastMillis = millis();
-    //    mqttClient.publish("homie/boiler_xxx/mkr1000/mkrenv/epoch", String(epoch), RETAIN, 0);
+
     mqttClient.publish("homie/boiler_xxx/mkr1000/mkrenv/temperature", (String(temperature) + " / " + String(epoch)), RETAIN, 0);
     mqttClient.publish("homie/boiler_xxx/mkr1000/relayshd/relay1", (relaystatus + " / " + String(epoch)), RETAIN, 0);
     mqttClient.publish("homie/boiler_xxx/mkr1000/mkrenv/tempsetpointH", (String(tempsetpointH) + " / " + String(epoch)), RETAIN, 0);
     mqttClient.publish("homie/boiler_xxx/mkr1000/mkrenv/tempsetpointL", (String(tempsetpointL) + " / " + String(epoch)), RETAIN, 0);
     mqttClient.publish("homie/boiler_xxx/mkr1000/relay1shd/relay1/$setteable", (relay1Setteable + " / " + String(epoch)), RETAIN, 0); // ++++ Añadido
     mqttClient.publish("homie/boiler_xxx/mkr1000/mkenviron/automatic", (automatic + " / " + String(epoch)), RETAIN, 0);
-    //   tempsetpointL_D = tempsetpointL;
-    //    tempsetpointH_D = tempsetpointH;
     Serial.print("Saving to ");
     Serial.println(fileName);
-    //delay(1000);
+
     WriteToFile(fileName, cleanFile(fileName));
     SaveDate("SenDate.txt", String(epoch));
   }
+
+// Si no conectado a buffer
 
   if (!(mqttClient.connected()))
   {
@@ -498,13 +440,15 @@ void alarmMatch()
     printReading(temperature);
     Serial.print("Saving to ");
     Serial.println(fileSave);
-    // delay(1000);
+
     WriteToFile(fileSave, cleanFile(fileSave));
     SaveDate("NoSDate.txt", String(epoch));
   }
 
   rtc.setAlarmSeconds((rtc.getAlarmSeconds() + TIME4) % 60);
 }
+
+// Lectura fichero csv
 
 void getCSVfields(String fullMsg)
 {
@@ -586,6 +530,8 @@ void setup()
   mqttClient.onMessage(messageReceived);
   connectMqttServer();
 
+// Puiblicacion de Inicio
+
   if ((mqttClient.connected()))
   {
 
@@ -604,29 +550,23 @@ void setup()
     mqttClient.publish("homie/boiler_xxx/mkr1000/mkrenv/temperature/$datatype", "float", RETAIN, 0);     //temperature value
     mqttClient.publish("homie/boiler_xxx/mkr1000/mkrenv/tempsetL/$datatype", "float", RETAIN, 0);
     mqttClient.publish("homie/boiler_xxx/mkr1000/mkrenv/tempsetH/$datatype", "float", RETAIN, 0);
-   // mqttClient.publish("homie/boiler_xxx/mkr1000/mkrenv/epoch/$datatype", "String", RETAIN, 0);          //time value
-                                                                                                         //    mqttClient.publish("homie/boiler_xxx/mkr1000/mkrenv/temperature_D/$datatype", "float", RETAIN, 0); //temperature value deferred
-                                                                                                         //    mqttClient.publish("homie/boiler_xxx/mkr1000/mkrenv/epoch_D/$datatype", "String", RETAIN, 0);      //time value deferred
-                                                                                                         //    mqttClient.publish("homie/boiler_xxx/mkr1000/mkrenv/$attributes", "$tempsetpointH,$tempsetpointL,automatic,$tempsetpointH_D,$tempsetpointL_D", RETAIN, 0);
-    mqttClient.publish("homie/boiler_xxx/mkr1000/mkrenv/tempsetpointH/$attributes", "float", RETAIN, 0); //temperature setpoint high
-    mqttClient.publish("homie/boiler_xxx/mkr1000/mkrenv/tempsetpointL/$attributes", "float", RETAIN, 0); //temperature setpoint low
-                                                                                                         //    mqttClient.publish("homie/boiler_xxx/mkr1000/mkrenv/$tempsetpointH_D/$attributes", "float", RETAIN, 0); //temperature setpoint high deferred
-                                                                                                         //    mqttClient.publish("homie/boiler_xxx/mkr1000/mkrenv/$tempsetpointL_D/$attributes", "float", RETAIN, 0); //temperature setpoint low deferred
+    mqttClient.publish("homie/boiler_xxx/mkr1000/mkrenv/tempsetpointH/$attributes", "float", RETAIN, 0);
+    mqttClient.publish("homie/boiler_xxx/mkr1000/mkrenv/tempsetpointL/$attributes", "float", RETAIN, 0);
     mqttClient.publish("homie/boiler_xxx/mkr1000/mkrenv/automatic/$attributes", "boolean", RETAIN, 0);   //automatic control setting
 
     //NODE 2
     mqttClient.publish("homie/boiler_xxx/mkr1000/relayshd/$name", "relayshd", RETAIN, 0);
     mqttClient.publish("homie/boiler_xxx/mkr1000/relayshd/$type", "", RETAIN, 0);
     mqttClient.publish("homie/boiler_xxx/mkr1000/relayshd/$properties", "relay1,relay1/set", RETAIN, 0);
-    mqttClient.publish("homie/boiler_xxx/mkr1000/relayshd/relay1/set/$datatype", "boolean", RETAIN, 0); //status relay1 setting
-                                                                                                        //    mqttClient.publish("homie/boiler_xxx/mkr1000/relayshd/relay1/$datatype", "boolean", RETAIN, 0);     //status relay1
-                                                                                                        //    mqttClient.publish("homie/boiler_xxx/mkr1000/relayshd/relay1_D/$datatype", "boolean", RETAIN, 0);   //status relay1 deferred
- //   mqttClient.publish("homie/boiler_xxx/mkr1000/relayshd/relay1/$setteable", "boolean", RETAIN, 0);
+    mqttClient.publish("homie/boiler_xxx/mkr1000/relayshd/relay1/set/$datatype", "boolean", RETAIN, 0);
     mqttClient.publish("homie/boiler_xxx/mkr1000/relayshd/relay1/$setteable", "true", RETAIN,0);
     mqttClient.publish("homie/boiler_xxx/mkr1000/relayshd/relay1/$attributes", "boolean", RETAIN, 0); // relay1 setteable setting
+
   }
 
   Watchdog.reset();
+
+// Ultimo estado del rele sin Conexion
 
   if (!(mqttClient.connected()))
   {
@@ -643,29 +583,16 @@ void setup()
     
     LastFilelog = ReadLine(fileSave, argument.toInt());
     Serial.println(LastFilelog);
-/*
-    LastFilelogEpoch = LastFilelog.substring(0, 10);
-    LastFilelogTemp = LastFilelog.substring(13, 18);
-    LastFilelogR1 = LastFilelog.substring(62, 68);
-    LastFilelogR1Set = LastFilelog.substring(75, 81);
-    LastFilelogtempsetpointH = LastFilelog.substring(22, 27);
-    LastFilelogtempsetpointL = LastFilelog.substring(42, 47);
-  
-*/    
-    //Serial.println(LastFilelogEpoch + LastFilelogTemp + LastFilelogR1 + LastFilelogR1Set + LastFilelogtempsetpointH + LastFilelogtempsetpointL);
 
     Serial.println("\nInit relay1 with last SD log...");
+
     if (LastFilelogR1.indexOf("true") >= 0)
-   // {
-      digitalWrite(RELAY1, HIGH);
-   // }
-   // if (LastFilelogR1.indexOf("false") >= 0)
-  //  {
+         digitalWrite(RELAY1, HIGH);
     else
       digitalWrite(RELAY1, LOW);
-  //  }
 
     Watchdog.enable(180000);
+
   }
 
   rtc.setAlarmTime(00, 00, 00);
@@ -723,16 +650,13 @@ void loop()
       {
 
         if (digitalRead(RELAY1))
-  //      {
           mqttClient.publish("homie/boiler_xxx/mkr1000/relayshd/relay1", String(true) + " / " + String(epoch),0,0);
-  //      }
-  //      if (!digitalRead(RELAY1))
-  //      {
-          else
+        else
           mqttClient.publish("homie/boiler_xxx/mkr1000/relayshd/relay1", String(false) + " / " + String(epoch),0,0);
-  //      }
+
       }
     }
+
     lastMillis2 = millis();
   }
 
@@ -740,6 +664,8 @@ void loop()
 
   if ((prevTime + Time) < millis())
   {
+
+// Limpieza de lecturas
 
     if (NumberOfLogs(fileSave) >= trigger)
     {
@@ -750,6 +676,8 @@ void loop()
       Watchdog.enable(180000);
       fileInfo(fileSave);
     }
+
+// Envio de lecturas diferidas
 
     if ((NumberOfLogs(fileSave) > 0) && (mqttClient.connected()))
     {
@@ -766,17 +694,7 @@ void loop()
 
       Serial.println(LastFilelog);
       getCSVfields(LastFilelog);
-/*
-      LastFilelogEpoch = LastFilelog.substring(0, 10); 
-      LastFilelogTemp = LastFilelog.substring(13, 18);
-      LastFilelogR1 = LastFilelog.substring(62, 68);
-      LastFilelogR1Set = LastFilelog.substring(75, 81);
-      LastFilelogtempsetpointH = LastFilelog.substring(22, 27);
-      LastFilelogtempsetpointL = LastFilelog.substring(42, 47);
-*/
-     
-
-      //Serial.println(LastFilelogEpoch + LastFilelogTemp + LastFilelogR1 + LastFilelogR1Set + LastFilelogtempsetpointH + LastFilelogtempsetpointL);
+ 
       Serial.println("\nSending last log to broker...");
       
       if (!mqttClient.connected())
@@ -790,20 +708,15 @@ void loop()
          LastFilelog = ReadLine(fileSave, argument.toInt());
          Serial.println(LastFilelog);
          getCSVfields(LastFilelog);
-        //        mqttClient.publish("homie/boiler_xxx/mkr1000/mkrenv/epoch_D", LastFilelogEpoch, RETAIN, 0);
+
          mqttClient.publish("homie/boiler_xxx/mkr1000/mkrenv/temperature", (msgField[1] + " / " + msgField[0]), RETAIN, 0);
          mqttClient.publish("homie/boiler_xxx/mkr1000/mkrenv/tempsetpointH", (msgField[2] + " / " + msgField[0]), RETAIN, 0);
          mqttClient.publish("homie/boiler_xxx/mkr1000/mkrenv/tempsetpointL", (msgField[3] + " / " + msgField[0]), RETAIN, 0);
-
-        // if (LastFilelogR1.indexOf("true") >= 0)
          mqttClient.publish("homie/boiler_xxx/mkr1000/relayshd/relay1", (msgField[4] + " / " + msgField[0]), RETAIN, 0);
-       // else
-       //   mqttClient.publish("homie/boiler_xxx/mkr1000/relayshd/relay1", "false", RETAIN, 0);
          mqttClient.publish("homie/boiler_xxx/mkr1000/relayshd/relay1/$setteable",(msgField[5]+  " / " + msgField[0]), RETAIN, 0);   //+++
          mqttClient.publish("homie/boiler_xxx/mkr1000/mkrenv/automatic",(msgField[6] + " / " + msgField[0]), RETAIN, 0);   //+++
-        //EraseLastLog(fileSave);
-        //fileInfo(fileSave);
         SD.remove(fileSave);     
+
        } 
 //----------------------------------------------------------------------------------
       }
@@ -817,6 +730,8 @@ void loop()
   }
   Watchdog.reset();
 
+
+// Control via serie
   s1 = Serial.readString();
   if (s1 != "")
   {
@@ -888,9 +803,11 @@ void loop()
       Serial.println("Invalid Data");
     }
   }
-    // WriteToFile(fileName);
-    Watchdog.reset();
+   Watchdog.reset();
 }
+
+// Ultimo Envio
+
 void SaveDate(char * nameofFile, String epch)
 {
   File myxFile;
@@ -904,12 +821,13 @@ void SaveDate(char * nameofFile, String epch)
     myxFile.close();
   }
 }
+
+// Limpieza fichero lecturas 
+
 int  cleanFile(char *nameofFile)
 {
   File myxFileO;
-  File myxFileD;
  
-  
   int ctdor = 0;
   String line;
   float epch;
@@ -922,22 +840,22 @@ int  cleanFile(char *nameofFile)
    Serial.println((epch - (epch -(24*60)))/3600);
   if (SD.exists(nameofFile))
   {
-   // myxFileD = SD.open("buffer.csv", FILE_WRITE);
-    myxFileO = SD.open(nameofFile, FILE_WRITE) ;
-//    myxFileD.close();
 
-    
+    myxFileO = SD.open(nameofFile, FILE_WRITE) ;  
+
     while (myxFileO.available())
     {
       ctdor++;
       line = myxFileO.readStringUntil('\n');
       getCSVfields(line);
+/*
       Serial.print("Linea: ");
       Serial.println(ctdor); 
       Serial.print("Msg: ");
       Serial.println(msgField[0]);
       Serial.print("Epoch -24: ");
       Serial.println(epch -(24*3600));
+*/      
       if (msgField[0].toFloat() <= epch - 24*3600) //-(24*3600)) // 24h en segundos
       {
         myxFileO.close();
@@ -958,6 +876,7 @@ int  cleanFile(char *nameofFile)
     myxFileO = SD.open(nameofFile, FILE_WRITE) ;
     myxFileO.close();
   }
-  Serial.println("Return NULL !!");
+  
+ // Serial.println("Return NULL !!");
    return NULL;
 }
